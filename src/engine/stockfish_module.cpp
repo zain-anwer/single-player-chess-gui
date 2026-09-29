@@ -1,8 +1,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/process.hpp>
-#include <boost/process/detail/child_decl.hpp>
-#include <boost/process/pipe.hpp>
+#include <boost/process/v1.hpp>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -10,7 +8,7 @@
 #include "stockfish_module.hpp"
 
 using namespace std;
-namespace bp = boost::process;
+namespace bp = boost::process::v1;
 
 
 Stockfish::Stockfish()
@@ -62,8 +60,8 @@ string Stockfish::play_move(vector<string> move_vector)
 }
 
 vector<string> Stockfish::list_legal_moves(){
-    
-    int line_count = 0; string line; vector<string> legal_moves;
+
+    string line; vector<string> legal_moves;
     
     // input to the stockfish game engine
 
@@ -71,27 +69,26 @@ vector<string> Stockfish::list_legal_moves(){
 
     while (getline(stock_out, line)){
         
-        // ignore the first two lines
+        if (!line.compare(0, 5, "Nodes")) break;
 
-        if (line_count++ < 2) 
+        size_t separator = line.find(':');
+        if (separator == string::npos)
             continue;
-        
-        // ignoring the last line that starts with "Nodes ..."
-        // string::compare() returns zero on equality
 
-        else if (!line.compare(0, 5, "Nodes")) break;
-
-        // only concerned with the first four letters of each line (moves)
-
-        line = line.substr(0, 4);
-        legal_moves.push_back(line);
+        string move = line.substr(0, separator);
+        if (move.size() == 4 || move.size() == 5)
+            legal_moves.push_back(move);
     }
 
     return legal_moves;
 }
 
-// the d input will trigger response that will list Checkers: ...
-// if the line stops at colon then there are no checkers hence king is not in check
+void Stockfish::reset_game()
+{
+    stock_in << "position startpos" << endl;
+}
+
+// The d command reports checker squares after "Checkers:"; whitespace alone means no check.
 
 bool Stockfish::check()
 {
@@ -104,16 +101,11 @@ bool Stockfish::check()
 
     while(getline(stock_out,res))
     {
-        if (!res.compare(0,9,"Checkers:"))
-        {
-            if (res.size() > 10)
-                return true;
-            else
-                return false;
-        }
         if (res.empty())
-            break;
+            continue;
 
+        if (!res.compare(0,9,"Checkers:"))
+            return res.find_first_not_of(" \t\r", 9) != string::npos;
     }
     return false;
 }

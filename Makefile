@@ -21,7 +21,7 @@ SDL_CFLAGS := $(shell sdl2-config --cflags)
 SDL_LIBS   := $(shell sdl2-config --libs)
 
 # Libraries
-LIBS := $(SDL_LIBS) -lboost_system -lboost_filesystem -lpthread
+LIBS := $(SDL_LIBS) -lboost_filesystem -lpthread
 
 # Default target
 all: $(TARGET)

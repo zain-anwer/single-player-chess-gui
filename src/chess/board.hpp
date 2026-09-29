@@ -22,6 +22,7 @@ class Board {
     	Board();
 	    void drawBoard(SDL_Renderer* renderer);
         void resetTileColours();
+        void resetBoard();
 };
 
 #endif 

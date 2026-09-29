@@ -1,0 +1,5 @@
+*.o                 // object files
+*.bin               // binary files
+chess_app           // executable
+black_pieces.txt    // log file
+white_pieces.txt    // log file

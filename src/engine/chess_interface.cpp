@@ -7,10 +7,25 @@ using namespace std;
 
 #include "chess_interface.hpp"
 
+/* file pointers */
+fstream white_pieces_log;
+fstream black_pieces_log;
+
 ChessInterface::ChessInterface()
 {
+    /* opening log files in write mode after truncating prior game content */
+
+    white_pieces_log.open("white_pieces.txt", std::ios::out | std::ios::in | std::ios::trunc);
+    black_pieces_log.open("black_pieces.txt", std::ios::out | std::ios::in | std::ios::trunc);
+    
     cout << "Interface Initialized\n";   
     turn = WHITE;   
+}
+
+ChessInterface::~ChessInterface()
+{
+    white_pieces_log.close();
+    black_pieces_log.close();
 }
 
 string ChessInterface::play_move(string cur_move)
@@ -28,32 +43,46 @@ string ChessInterface::play_move(string cur_move)
     return chess_engine.play_move(total_moves);
 }
 
+void ChessInterface::reset_game()
+{
+    /* reinitializing file pointers */
+    white_pieces_log.close();
+    black_pieces_log.close();
+
+    white_pieces_log.open("white_pieces.txt", std::ios::out | std::ios::in | std::ios::trunc);
+    black_pieces_log.open("black_pieces.txt", std::ios::out | std::ios::in | std::ios::trunc);
+    
+    total_moves.clear();
+    turn = WHITE;
+    chess_engine.reset_game();
+}
+
 vector<string> ChessInterface::list_legal_moves()
 {    return chess_engine.list_legal_moves();    }
+
+GameStatus ChessInterface::game_status()
+{
+    vector<string> legal_moves = list_legal_moves();
+    bool in_check = chess_engine.check();
+
+    if (legal_moves.empty()) 
+    {
+        return in_check ? GAME_CHECKMATE : GAME_STALEMATE;
+    }
+    return in_check ? GAME_CHECK : GAME_IN_PROGRESS;
+}
 
 bool ChessInterface::check()
 {   return chess_engine.check();    }
 
 bool ChessInterface::checkmate()
 {
-    vector<string> legal_moves = list_legal_moves();
-    if (legal_moves.empty())
-    {
-        if (chess_engine.check())
-            return true;
-    }
-    return false;
+    return game_status() == GAME_CHECKMATE;
 }
 
 bool ChessInterface::stalemate()
 {
-    vector<string> legal_moves = list_legal_moves();
-    if (legal_moves.empty())
-    {
-        if (!chess_engine.check())
-            return true;
-    }
-    return false;
+    return game_status() == GAME_STALEMATE;
 }
 
 string ChessInterface::get_eval_score()
@@ -72,30 +101,30 @@ string ChessInterface::get_eval_score()
 
 void ChessInterface::add_captured_piece(string name, int color)
 {
-    ofstream f_out;
-
-    if (color == WHITE) f_out.open("white_pieces.txt");
-    else if (color == BLACK) f_out.open("black_pieces.txt");
+    if (color == WHITE) 
+        white_pieces_log << name << endl;
+    else if (color == BLACK) 
+        black_pieces_log << name << endl;
     else throw "Invalid Piece Color!";
-
-    f_out << name << endl;
-    f_out.close();
 }
 
 vector<string> ChessInterface::read_captured_pieces(string color){
     
-    ifstream f_in; string piece;
+    string piece;
     vector<string> captured_pieces;
+    string file_name;
 
-    if (color == "Black") f_in.open("white_pieces.txt");
-    else if (color == "White") f_in.open("black_pieces.txt");
+    if (color == "White") 
+        file_name = "white_pieces.txt";
+    else if (color == "Black") 
+        file_name = "black_pieces.txt";
     else throw "Invalid Piece Color!";
 
-    while (!f_in.eof()){
-        f_in >> piece; captured_pieces.push_back(piece);
-    }
+    ifstream f_in(file_name);
+    while (f_in >> piece)
+        captured_pieces.push_back(piece);
 
-    f_in.close(); return captured_pieces;
+    return captured_pieces;
 }
 
 template <typename Game>
@@ -111,3 +140,4 @@ void ChessInterface::load_game(Game& board){
     f_in.read((char*) &board, sizeof(board));
     f_in.close();
 }
+

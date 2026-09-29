@@ -9,6 +9,14 @@ using namespace std;
 #define BLACK 0
 #define WHITE 1
 
+enum GameStatus
+{
+    GAME_IN_PROGRESS,
+    GAME_CHECK,
+    GAME_CHECKMATE,
+    GAME_STALEMATE
+};
+
 class ChessInterface {
     
     vector<string> total_moves;
@@ -22,7 +30,9 @@ public:
    
     ChessInterface();
     string play_move(string cur_move);
+    void reset_game();
     vector<string> list_legal_moves();
+    GameStatus game_status();
     string get_eval_score();
     bool check();
     bool stalemate();
@@ -36,4 +46,6 @@ public:
 
     template <typename Game>
     void load_game(Game& board);
+
+    ~ChessInterface();
 };

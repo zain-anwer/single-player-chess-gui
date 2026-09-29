@@ -85,6 +85,7 @@ int Dynamics::select(SDL_Point *p, Board &B)
                         dest_j = -1;
                         src_i = -1;
                         src_j = -1;
+                        check(B);
                         return INVALID_CHOICE;
                     }
 
@@ -93,39 +94,40 @@ int Dynamics::select(SDL_Point *p, Board &B)
                     bool is_move = false;
                     bool is_capture = false;
 
-                    if (B.tiles[dest_i][dest_j].piece == nullptr)
+                    ChessPiece *captured_piece = B.tiles[dest_i][dest_j].piece;
+                    if (captured_piece == nullptr && B.tiles[src_i][src_j].piece->name == "Pawn" && src_j != dest_j)
+                        captured_piece = B.tiles[src_i][dest_j].piece;
+
+                    if (captured_piece == nullptr)
                         is_move = true;
                     else
                     {
-                        int colour = B.tiles[dest_i][dest_j].piece->colour;
-                        string name = B.tiles[dest_i][dest_j].piece->name;
-                        interface->add_captured_piece(name,colour); 
+                        interface->add_captured_piece(captured_piece->name, captured_piece->colour);
                         is_capture = true;
                     }
 
                     string uci_string = move(B);
                     interface->play_move(uci_string);
 
-                    // checking for check, checkmate, and stalemate
-
-                    if (interface->stalemate())
+                    GameStatus status = interface->game_status();
+                    B.resetTileColours();
+                    if (status == GAME_CHECK || status == GAME_CHECKMATE)
                     {
-                        cout << "Stalemate reached !!!";
-                        return STALEMATE;
-                    }
-
-                    if (check(B))
-                    {
-                        if (interface->checkmate())
+                        for (int row = 0; row < 8; row++)
                         {
-                            if (interface->turn == WHITE)
-                                cout << "Black Won!!!";
-                            else
-                                cout << "White Won!!!";
-
-                            return CHECKMATE;
+                            for (int column = 0; column < 8; column++)
+                            {
+                                ChessPiece *piece = B.tiles[row][column].piece;
+                                if (piece != nullptr && piece->colour == interface->turn && piece->name == "King")
+                                    B.tiles[row][column].colour = CHECK;
+                            }
                         }
                     }
+
+                    if (status == GAME_CHECKMATE)
+                        return CHECKMATE;
+                    if (status == GAME_STALEMATE)
+                        return STALEMATE;
 
                     if (is_move)
                         return VALID_MOVE;
@@ -164,7 +166,7 @@ bool Dynamics::validate()
     cur_move[3] = ('8' - dest_i);
     cur_move[2] = (dest_j + 'a');
     for (string move : interface->list_legal_moves())
-        if (cur_move == move)
+        if (move.size() >= 4 && cur_move == move.substr(0, 4) && (move.size() == 4 || move[4] == 'q'))
             return true;
     return false;
 }
@@ -222,12 +224,22 @@ string Dynamics::move(Board &B)
     else if (B.tiles[src_i][src_j].piece != nullptr && B.tiles[src_i][src_j].piece->name == "Pawn" && (dest_i == 0 || dest_i == 7))
     {
 
-        int type = (B.tiles[src_i][src_j].piece->colour == WHITE) ? 0 : 1;
+        int type = B.tiles[src_i][src_j].piece->colour;
         delete B.tiles[src_i][src_j].piece;
         B.tiles[src_i][src_j].piece = nullptr;
+        delete B.tiles[dest_i][dest_j].piece;
         B.tiles[dest_i][dest_j].piece = new Queen(type);
         pawn_promotion = true;
         cout << "Pawn promoted to queen by default (didn't have the energy to implement choice :(" << endl;
+    }
+
+    else if (B.tiles[src_i][src_j].piece != nullptr && B.tiles[src_i][src_j].piece->name == "Pawn" &&
+             B.tiles[dest_i][dest_j].piece == nullptr && src_j != dest_j)
+    {
+        delete B.tiles[src_i][dest_j].piece;
+        B.tiles[src_i][dest_j].piece = nullptr;
+        B.tiles[dest_i][dest_j].piece = B.tiles[src_i][src_j].piece;
+        B.tiles[src_i][src_j].piece = nullptr;
     }
 
     // normal moves and captures

@@ -1,4 +1,4 @@
 #include "tile.hpp"
 
-Tile::Tile() {colour = false;}
+Tile::Tile() : piece(nullptr), colour(0) {}
 Tile::~Tile() {delete piece;}
