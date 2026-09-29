@@ -33,30 +33,16 @@ Stockfish::Stockfish()
     cout << "Stockfish engine initialized" << endl;
 }
 
-string Stockfish::play_move(vector<string> move_vector)
+void Stockfish::set_position(const vector<string> &move_vector)
 {
-    string line, move_string;
+    string line;
 
-    for (auto str : move_vector) 
+    for (const string &str : move_vector)
         line += str + " ";
-    
-    stock_in << "position startpos moves " + line << endl;
-    stock_in << "go movetime 300" << endl;
-
-    while (getline(stock_out, line))
-    {
-        if (!line.compare(0, 8, "bestmove")){
-            move_string = line; break;
-        }
-    }
-
-    move_string = move_string.substr(9, move_string.size()-9);
-
-    // splits move_string on the basis of spaces to prevent errors
-    
-    boost::split(move_vector, move_string, boost::is_any_of(" "));
-
-    return move_vector.at(0);
+    stock_in << "position startpos";
+    if (!line.empty())
+        stock_in << " moves " << line;
+    stock_in << endl;
 }
 
 vector<string> Stockfish::list_legal_moves(){

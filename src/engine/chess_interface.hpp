@@ -29,7 +29,7 @@ public:
 public:
    
     ChessInterface();
-    string play_move(string cur_move);
+    void play_move(string cur_move);
     void reset_game();
     vector<string> list_legal_moves();
     GameStatus game_status();

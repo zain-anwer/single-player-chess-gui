@@ -28,7 +28,7 @@ ChessInterface::~ChessInterface()
     black_pieces_log.close();
 }
 
-string ChessInterface::play_move(string cur_move)
+void ChessInterface::play_move(string cur_move)
 {
     cout << "Moved played " << cur_move << " \n"; 
     total_moves.push_back(cur_move);
@@ -40,7 +40,7 @@ string ChessInterface::play_move(string cur_move)
     else
         turn = WHITE;
     
-    return chess_engine.play_move(total_moves);
+    chess_engine.set_position(total_moves);
 }
 
 void ChessInterface::reset_game()

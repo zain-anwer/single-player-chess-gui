@@ -15,7 +15,7 @@ class Stockfish {
 public:
   
     Stockfish();    
-    string play_move(vector<string> move_vector);
+    void set_position(const vector<string> &move_vector);
     vector<string> list_legal_moves();
     void reset_game();
     bool check();

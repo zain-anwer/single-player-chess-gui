@@ -5,7 +5,7 @@
 #include "utils/audio.hpp"
 #include "chess/dynamics.hpp"
 
-#define SOUND_DELAY 25
+#define SWITCH_DELAY_FRAMES 25
 
 using namespace std;
 
@@ -257,9 +257,9 @@ int main()
 
 	SDL_Point p;
 
-	int sound_timer = 0;
 	int select_result = 0;
-	bool sound_timer_started = false;
+	int switch_timer = 0;
+	bool switch_pending = false;
 	bool game_over = false;
 
 
@@ -271,7 +271,7 @@ int main()
 			if (event.type == SDL_QUIT)
 				running = false;
 
-			if (game_over && event.type == SDL_KEYDOWN)
+			if (!switch_pending && game_over && event.type == SDL_KEYDOWN)
 			{
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					running = false;
@@ -283,7 +283,7 @@ int main()
 				}
 			}
 			
-			if (event.type == SDL_MOUSEBUTTONDOWN)
+			if (!switch_pending && event.type == SDL_MOUSEBUTTONDOWN)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
@@ -301,36 +301,28 @@ int main()
 					}
 					else
 					{
-						sound_timer_started = true;
 						p.x = event.button.x;
 						p.y = event.button.y;
 						select_result = D.select(&p, B1);
+						audio.playSound(select_result);
 
 						if (select_result == VALID_MOVE || select_result == VALID_CAPTURE ||
 							select_result == CHECKMATE || select_result == STALEMATE)
-							D.flipBoard(B1);
-
-						if (select_result == CHECKMATE || select_result == STALEMATE)
-							game_over = true;
+						{
+							switch_timer = 0;
+							switch_pending = true;
+						}
 					}
 				}
 			}				
 		}
 
-		if (select_result == SOURCE_SELECTION)
+		if (switch_pending && ++switch_timer > SWITCH_DELAY_FRAMES)
 		{
-			sound_timer_started = false;
-			sound_timer = 0;
-		}
-
-		if (sound_timer_started)
-			sound_timer++;
-
-		if (select_result != SOURCE_SELECTION && sound_timer > SOUND_DELAY)
-		{
-			sound_timer_started = false;
-			sound_timer = 0;
-			audio.playSound(select_result);
+			D.flipBoard(B1);
+			switch_pending = false;
+			if (select_result == CHECKMATE || select_result == STALEMATE)
+				game_over = true;
 		}
 
 		B1.drawBoard(renderer);
@@ -344,6 +336,7 @@ int main()
 		for (int piece = 0; piece < 6; piece++)
 			if (captured_piece_textures[color][piece] != nullptr)
 				SDL_DestroyTexture(captured_piece_textures[color][piece]);
+	audio.shutdown();
 		
 	SDL_DestroyRenderer(renderer);
 			
