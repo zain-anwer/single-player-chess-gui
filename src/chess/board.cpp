@@ -2,8 +2,8 @@
 
 Board::Board()
 {
-    int x_pos = (800 / 2) - (4 * 60);
-    int y_pos = (600 / 2) - (4 * 60);
+    int x_pos = CHESS_BOARD_X;
+    int y_pos = CHESS_BOARD_Y;
 
     for (int i = 0; i < 8; i++)
     {
@@ -11,12 +11,12 @@ Board::Board()
         {
             tiles[i][j].square.x = x_pos;
             tiles[i][j].square.y = y_pos;
-            tiles[i][j].square.w = 60;
-            tiles[i][j].square.h = 60;
-            x_pos += 60;
+            tiles[i][j].square.w = CHESS_TILE_SIZE;
+            tiles[i][j].square.h = CHESS_TILE_SIZE;
+            x_pos += CHESS_TILE_SIZE;
         }
-        y_pos += 60;
-        x_pos = (800 / 2) - (4 * 60);
+        y_pos += CHESS_TILE_SIZE;
+        x_pos = CHESS_BOARD_X;
     }
 
     resetBoard();
@@ -57,10 +57,10 @@ void Board::resetBoard()
 void Board::drawBoard(SDL_Renderer* renderer)
 {
     SDL_Rect border;
-    border.x = (800 / 2) - (4 * 60) - 15;
-    border.y = (600 / 2) - (4 * 60) - 15;
-    border.w = 60 * 8 + 30;
-    border.h = 60 * 8 + 30;
+    border.x = CHESS_BOARD_X - CHESS_BOARD_BORDER;
+    border.y = CHESS_BOARD_Y - CHESS_BOARD_BORDER;
+    border.w = CHESS_BOARD_SIZE + 2 * CHESS_BOARD_BORDER;
+    border.h = CHESS_BOARD_SIZE + 2 * CHESS_BOARD_BORDER;
 
     SDL_SetRenderDrawColor(renderer, 149, 83, 59, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
@@ -68,10 +68,10 @@ void Board::drawBoard(SDL_Renderer* renderer)
     SDL_RenderFillRect(renderer, &border);
 
     SDL_Rect inner_board;
-    inner_board.x = (800 / 2) - (4 * 60);
-    inner_board.y = (600 / 2) - (4 * 60);
-    inner_board.w = 60 * 8;
-    inner_board.h = 60 * 8;
+    inner_board.x = CHESS_BOARD_X;
+    inner_board.y = CHESS_BOARD_Y;
+    inner_board.w = CHESS_BOARD_SIZE;
+    inner_board.h = CHESS_BOARD_SIZE;
     SDL_SetRenderDrawColor(renderer, 149, 83, 59, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &inner_board);
 

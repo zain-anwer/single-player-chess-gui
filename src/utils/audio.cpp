@@ -30,7 +30,7 @@ void Audio::playSound (int type)
 	}
 	SDL_PauseAudioDevice(deviceId, 0);
 
-	SDL_Delay(750);
+	SDL_Delay(100);
 
 	SDL_CloseAudioDevice(deviceId);
     SDL_FreeWAV(wavStart);

@@ -103,7 +103,7 @@ The application is organized into four main areas:
                     └──────────────────────────────┘
 ```
 
-### Typical Move Flo
+### Typical Move Flow
 
 ```text
 Player
@@ -697,6 +697,3 @@ ChessAudio/
 ## License
 
 Apache License 2.0 — see the `LICENSE` file for details.
-
-```
-```

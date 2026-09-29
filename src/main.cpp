@@ -9,8 +9,8 @@
 
 using namespace std;
 
-static const SDL_Rect RESTART_BUTTON = {205, 345, 250, 56};
-static const SDL_Rect QUIT_BUTTON = {475, 345, 120, 56};
+static const SDL_Rect RESTART_BUTTON = {(CHESS_WINDOW_WIDTH - 390) / 2, 435, 250, 56};
+static const SDL_Rect QUIT_BUTTON = {RESTART_BUTTON.x + 270, 435, 120, 56};
 
 static const uint8_t FONT[26][7] = {
 	{0x0e,0x11,0x11,0x1f,0x11,0x11,0x11}, {0x1e,0x11,0x11,0x1e,0x11,0x11,0x1e},
@@ -103,26 +103,28 @@ static void loadCapturedPieceTextures(SDL_Renderer *renderer, SDL_Texture *textu
 static void drawCapturedPanel(SDL_Renderer *renderer, const SDL_Rect &panel, const string &owner,
 	const vector<string> &captured_pieces, int piece_color, SDL_Texture *textures[2][6])
 {
-	SDL_SetRenderDrawColor(renderer, 45, 48, 43, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(renderer, 58, 34, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(renderer, &panel);
-	SDL_Rect inner = {panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6};
-	SDL_SetRenderDrawColor(renderer, 237, 229, 209, SDL_ALPHA_OPAQUE);
+	SDL_Rect inner = {panel.x + 4, panel.y + 4, panel.w - 8, panel.h - 8};
+	SDL_SetRenderDrawColor(renderer, 142, 88, 48, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(renderer, &inner);
 
-	SDL_SetRenderDrawColor(renderer, 45, 48, 43, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(renderer, 184, 128, 75, SDL_ALPHA_OPAQUE);
+	for (int grain = 0; grain < 7; grain++)
+	{
+		int y = panel.y + 56 + grain * 94;
+		SDL_RenderDrawLine(renderer, panel.x + 8, y, panel.x + panel.w - 8, y);
+	}
+
 	drawText(renderer, owner, panel.x + (panel.w - textWidth(owner, 2)) / 2, panel.y + 15, 2,
-		{45, 48, 43, SDL_ALPHA_OPAQUE});
-	SDL_RenderDrawLine(renderer, panel.x + 12, panel.y + 40, panel.x + panel.w - 12, panel.y + 40);
+		{250, 229, 196, SDL_ALPHA_OPAQUE});
+	SDL_SetRenderDrawColor(renderer, 75, 45, 27, SDL_ALPHA_OPAQUE);
+	SDL_RenderDrawLine(renderer, panel.x + 12, panel.y + 45, panel.x + panel.w - 12, panel.y + 45);
 
 	for (int slot = 0; slot < 16; slot++)
 	{
 		int column = slot % 2;
 		int row = slot / 2;
-		SDL_Rect piece_slot = {panel.x + 17 + column * 54, panel.y + 54 + row * 46, 42, 42};
-		SDL_SetRenderDrawColor(renderer, 221, 211, 190, SDL_ALPHA_OPAQUE);
-		SDL_RenderFillRect(renderer, &piece_slot);
-		SDL_SetRenderDrawColor(renderer, 186, 173, 149, SDL_ALPHA_OPAQUE);
-		SDL_RenderDrawRect(renderer, &piece_slot);
 
 		if (slot >= static_cast<int>(captured_pieces.size()))
 			continue;
@@ -131,7 +133,8 @@ static void drawCapturedPanel(SDL_Renderer *renderer, const SDL_Rect &panel, con
 		if (image_index < 0 || textures[piece_color][image_index] == nullptr)
 			continue;
 
-		SDL_Rect piece_image = {piece_slot.x + 3, piece_slot.y + 3, 36, 36};
+		SDL_Rect piece_image = {panel.x + 14 + column * 84, panel.y + 58 + row * 80,
+			CHESS_TILE_SIZE, CHESS_TILE_SIZE};
 		SDL_RenderCopy(renderer, textures[piece_color][image_index], nullptr, &piece_image);
 	}
 }
@@ -139,8 +142,16 @@ static void drawCapturedPanel(SDL_Renderer *renderer, const SDL_Rect &panel, con
 static void drawCapturedPanels(SDL_Renderer *renderer, ChessInterface &interface,
 	SDL_Texture *textures[2][6])
 {
-	const SDL_Rect left_panel = {8, 60, 144, 480};
-	const SDL_Rect right_panel = {648, 60, 144, 480};
+	constexpr int panel_width = 184;
+	constexpr int panel_height = 720;
+	constexpr int board_gap = 18;
+	const int panel_y = (CHESS_WINDOW_HEIGHT - panel_height) / 2;
+	const SDL_Rect left_panel = {
+		CHESS_BOARD_X - CHESS_BOARD_BORDER - board_gap - panel_width,
+		panel_y, panel_width, panel_height};
+	const SDL_Rect right_panel = {
+		CHESS_BOARD_X + CHESS_BOARD_SIZE + CHESS_BOARD_BORDER + board_gap,
+		panel_y, panel_width, panel_height};
 	vector<string> white_pieces = interface.read_captured_pieces("White");
 	vector<string> black_pieces = interface.read_captured_pieces("Black");
 
@@ -153,11 +164,11 @@ static void drawGameOverDialog(SDL_Renderer *renderer, int result, int turn)
 {
 	string title = result == CHECKMATE ? "CHECKMATE" : "STALEMATE";
 	string message = result == CHECKMATE ? (turn == WHITE ? "BLACK WINS" : "WHITE WINS") : "DRAW";
-	SDL_Rect panel = {140, 175, 520, 260};
+	SDL_Rect panel = {(CHESS_WINDOW_WIDTH - 520) / 2, (CHESS_WINDOW_HEIGHT - 260) / 2, 520, 260};
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(renderer, 15, 20, 19, 165);
-	SDL_Rect scrim = {0, 0, 800, 600};
+	SDL_Rect scrim = {0, 0, CHESS_WINDOW_WIDTH, CHESS_WINDOW_HEIGHT};
 	SDL_RenderFillRect(renderer, &scrim);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
@@ -168,9 +179,9 @@ static void drawGameOverDialog(SDL_Renderer *renderer, int result, int turn)
 	SDL_RenderFillRect(renderer, &inner_panel);
 
 	int title_scale = 4;
-	drawText(renderer, title, (800 - textWidth(title, title_scale)) / 2, 205, title_scale,
+	drawText(renderer, title, (CHESS_WINDOW_WIDTH - textWidth(title, title_scale)) / 2, panel.y + 30, title_scale,
 		{35, 43, 39, SDL_ALPHA_OPAQUE});
-	drawText(renderer, message, (800 - textWidth(message, 2)) / 2, 252, 2,
+	drawText(renderer, message, (CHESS_WINDOW_WIDTH - textWidth(message, 2)) / 2, panel.y + 85, 2,
 		{91, 49, 39, SDL_ALPHA_OPAQUE});
 
 	SDL_SetRenderDrawColor(renderer, 62, 115, 82, SDL_ALPHA_OPAQUE);
@@ -210,7 +221,8 @@ int main()
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
-	window = SDL_CreateWindow("-- Chess --", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("-- Chess --", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		CHESS_WINDOW_WIDTH, CHESS_WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 	if (window == nullptr)
 	{
 		cerr << "SDL window creation failed: " << SDL_GetError() << '\n';
